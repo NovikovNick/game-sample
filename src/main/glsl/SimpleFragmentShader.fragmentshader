@@ -1,12 +1,13 @@
 #version 330 core
 
+
+// Интерполированные значения из вершинного шейдера
+in vec3 fragmentColor;
 // Ouput data
 out vec3 color;
 
-void main()
-{
-
-	// Output color = red 
-	color = vec3(1,0,0);
-
+void main(){
+    // Выходной цвет = цвету, указанному в вершинном шейдере,
+    // интерполированному между 3 близлежащими вершинами.
+    color = fragmentColor;
 }

@@ -14,7 +14,7 @@
 
 #include "../shader.h"
 
-GLuint LoadShaders(const char *vertex_file_path, const char *fragment_file_path) {
+GLuint Graphic::LoadShaders(const char *vertex_file_path, const char *fragment_file_path) {
 
     // Создаем шейдеры
     GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
@@ -93,4 +93,10 @@ GLuint LoadShaders(const char *vertex_file_path, const char *fragment_file_path)
     glDeleteShader(FragmentShaderID);
 
     return ProgramID;
+}
+
+float Graphic::animate(float from, float to, uint16_t frameSeqNumber, float velocity)  {
+    float frameThreshold = 60 / velocity;
+    float progress = (frameSeqNumber % (uint16_t) frameThreshold) / frameThreshold;
+    return from + (to - from) * progress;
 }
