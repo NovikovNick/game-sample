@@ -1,6 +1,8 @@
 ```
-git clone git@github.com:NovikovNick/game-sample.git
+git clone --recurse-submodules git@github.com:NovikovNick/game-sample.git
+```
 
+```
 sudo apt-get update
 sudo apt-get install cmake
 sudo apt-get install make
@@ -14,5 +16,9 @@ sudo apt-get install libext-dev
 
 sudo apt-get install libglew-dev
 sudo apt-get install libglfw3 libglfw3-dev
+```
 
+External dependencies
+```
+git submodule add git@github.com:g-truc/glm.git external_dependencies/glm
 ```

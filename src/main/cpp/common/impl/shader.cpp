@@ -74,7 +74,7 @@ GLuint LoadShaders(const char *vertex_file_path, const char *fragment_file_path)
     }
 
     // Создаем шейдерную программу и привязываем шейдеры к ней
-    fprintf(stdout, "Create shader program and bind shaders");
+    fprintf(stdout, "Create shader program and bind shaders \n");
     GLuint ProgramID = glCreateProgram();
     glAttachShader(ProgramID, VertexShaderID);
     glAttachShader(ProgramID, FragmentShaderID);

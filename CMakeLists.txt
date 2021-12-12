@@ -14,6 +14,11 @@ endif (NOT OPENGL_FOUND)
 
 find_package(GLEW REQUIRED)
 
+
+include_directories(
+        external_dependencies/glm
+)
+
 add_executable(game ${SOURCE_EXE})
 
 message("[debug] GLEW = " + ${GLEW_LIBRARIES})
