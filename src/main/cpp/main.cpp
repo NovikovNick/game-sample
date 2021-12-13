@@ -12,6 +12,7 @@
 // Include GLFW
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <cstring>
 #include "common/shader.h"
 
 GLFWwindow *window;
@@ -182,6 +183,8 @@ public:
     }
 };
 
+GLuint loadDDS(const char *string);
+
 int main(void) {
     // Initialise GLFW
     if (!glfwInit()) {
@@ -228,19 +231,27 @@ int main(void) {
 
 
     // Create and compile our GLSL program from the shaders
-    GLuint programID = Graphic::LoadShaders("../src/main/glsl/SimpleVertexShader.vertexshader",
-                                            "../src/main/glsl/SimpleFragmentShader.fragmentshader");
+    /*GLuint programID = Graphic::LoadShaders("../src/main/glsl/SimpleVertexShader.vertexshader",
+                                            "../src/main/glsl/SimpleFragmentShader.fragmentshader");*/
+    GLuint programID = Graphic::LoadShaders("../src/main/glsl/TransformVertexShader.vertexshader",
+                                            "../src/main/glsl/TextureFragmentShader.fragmentshader");
+
+
+
+
     // mesh
     Cube cube = Cube();
-    Triangle triangle = Triangle();
     CubeTexture cubeTexture = CubeTexture();
 
     MeshService service = MeshService();
     GLuint vertexbuffer = service.registerMesh(&cube);
     GLuint colorbuffer = service.registerTexture(&cubeTexture);
 
+    GLuint Texture = loadDDS("../src/main/resources/uvtemplate.DDS");
+    GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
 
-    GLuint triangleVB = service.registerMesh(&triangle);
+    // Triangle triangle = Triangle();
+    // GLuint triangleVB = service.registerMesh(&triangle);
 
     do {
         frame++;
@@ -259,7 +270,7 @@ int main(void) {
 
         // glm::mat4 T = glm::translate(glm::mat4(1.0f), glm::vec3(Graphic::animate(0, 1, frame, 0.5), 0, 0));
         glm::mat4 T = glm::mat4(1.0f);
-        glm::mat4 R = glm::rotate(glm::mat4(1.0f), Graphic::animate(0, 6.3, frame, 0.5), glm::vec3(0, 1, 0));
+        glm::mat4 R = glm::rotate(glm::mat4(1.0f), Graphic::animate(0, 6.3, frame, 0.1), glm::vec3(0, 1, 0));
 
         // Итоговая матрица ModelViewProjection, которая является результатом перемножения наших трех матриц
         glm::mat4 MVP = Projection * View * R * T * Model; // Помните, что умножение матрицы производиться в обратном порядке
@@ -267,8 +278,14 @@ int main(void) {
         // Получить хэндл переменной в шейдере
         // Только один раз во время инициализации.
         GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-        
-        
+
+        // Bind our texture in Texture Unit 0
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture);
+        // Set our "myTextureSampler" sampler to use Texture Unit 0
+        glUniform1i(TextureID, 0);
+
+
         // Clear the screen. It's not mentioned before Tutorial 02, but it can cause flickering, so it's there nonetheless.
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -308,7 +325,7 @@ int main(void) {
 
 
         // Draw the triangle !
-        glEnableVertexAttribArray(0);
+        /*glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, triangleVB);
         glVertexAttribPointer(
                 0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
@@ -318,7 +335,7 @@ int main(void) {
                 0,                  // stride
                 (void *) 0            // array buffer offset
         );
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, 3);*/
 
         glDisableVertexAttribArray(0);
 
@@ -336,6 +353,104 @@ int main(void) {
     glfwTerminate();
 
     return 0;
+}
+
+
+#define FOURCC_DXT1 0x31545844 // Equivalent to "DXT1" in ASCII
+#define FOURCC_DXT3 0x33545844 // Equivalent to "DXT3" in ASCII
+#define FOURCC_DXT5 0x35545844 // Equivalent to "DXT5" in ASCII
+
+GLuint loadDDS(const char * imagepath){
+
+    unsigned char header[124];
+
+    FILE *fp;
+
+    /* try to open the file */
+    fp = fopen(imagepath, "rb");
+    if (fp == NULL){
+        printf("%s could not be opened. Are you in the right directory ? Don't forget to read the FAQ !\n", imagepath); getchar();
+        return 0;
+    }
+
+    /* verify the type of file */
+    char filecode[4];
+    fread(filecode, 1, 4, fp);
+    if (strncmp(filecode, "DDS ", 4) != 0) {
+        fclose(fp);
+        return 0;
+    }
+
+    /* get the surface desc */
+    fread(&header, 124, 1, fp);
+
+    unsigned int height      = *(unsigned int*)&(header[8 ]);
+    unsigned int width	     = *(unsigned int*)&(header[12]);
+    unsigned int linearSize	 = *(unsigned int*)&(header[16]);
+    unsigned int mipMapCount = *(unsigned int*)&(header[24]);
+    unsigned int fourCC      = *(unsigned int*)&(header[80]);
+
+
+    unsigned char * buffer;
+    unsigned int bufsize;
+    /* how big is it going to be including all mipmaps? */
+    bufsize = mipMapCount > 1 ? linearSize * 2 : linearSize;
+    buffer = (unsigned char*)malloc(bufsize * sizeof(unsigned char));
+    fread(buffer, 1, bufsize, fp);
+    /* close the file pointer */
+    fclose(fp);
+
+    unsigned int components  = (fourCC == FOURCC_DXT1) ? 3 : 4;
+    unsigned int format;
+    switch(fourCC)
+    {
+        case FOURCC_DXT1:
+            format = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+            break;
+        case FOURCC_DXT3:
+            format = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+            break;
+        case FOURCC_DXT5:
+            format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+            break;
+        default:
+            free(buffer);
+            return 0;
+    }
+
+    // Create one OpenGL texture
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+
+    // "Bind" the newly created texture : all future texture functions will modify this texture
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+
+    unsigned int blockSize = (format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ? 8 : 16;
+    unsigned int offset = 0;
+
+    /* load the mipmaps */
+    for (unsigned int level = 0; level < mipMapCount && (width || height); ++level)
+    {
+        unsigned int size = ((width+3)/4)*((height+3)/4)*blockSize;
+        glCompressedTexImage2D(GL_TEXTURE_2D, level, format, width, height,
+                               0, size, buffer + offset);
+
+        offset += size;
+        width  /= 2;
+        height /= 2;
+
+        // Deal with Non-Power-Of-Two textures. This code is not included in the webpage to reduce clutter.
+        if(width < 1) width = 1;
+        if(height < 1) height = 1;
+
+    }
+
+    free(buffer);
+
+    return textureID;
+
+
 }
 
 
