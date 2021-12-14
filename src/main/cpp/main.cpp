@@ -18,6 +18,8 @@
 GLFWwindow *window;
 
 uint16_t frame = 0;
+int WIDTH = 1024;
+int HEIGHT = 768;
 
 class Mesh {
 public:
@@ -141,7 +143,6 @@ private:
     };
 };
 
-
 class Triangle : public Mesh {
 public:
     ~Triangle() {
@@ -185,6 +186,31 @@ public:
 
 GLuint loadDDS(const char *string);
 
+struct Input {
+public:
+    bool isWPressed;
+    bool isAPressed;
+    bool isSPressed;
+    bool isDPressed;
+    Input(bool isWPressed, bool isAPressed, bool isSPressed, bool isDPressed) : isWPressed(isWPressed),
+                                                                                isAPressed(isAPressed),
+                                                                                isSPressed(isSPressed),
+                                                                                isDPressed(isDPressed) {}
+};
+
+Input getInput();
+
+struct Camera {
+public:
+    float mouseSpeed = 0.01;
+    float horizontalAngle = 3.14f;
+    float verticalAngle = 0.0f;
+    float initialFoV = 45.0f;
+    glm::vec3 position = glm::vec3(0,0,5);
+};
+
+glm::mat4 getView(Camera &camera, const Input &input, float deltaTime);
+
 int main(void) {
     // Initialise GLFW
     if (!glfwInit()) {
@@ -200,7 +226,7 @@ int main(void) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Open a window and create its OpenGL context
-    window = glfwCreateWindow(1024, 768, "Captain Triangle conquers the universe", NULL, NULL);
+    window = glfwCreateWindow(WIDTH, HEIGHT, "Captain Triangle conquers the universe", NULL, NULL);
     if (window == NULL) {
         fprintf(stderr,
                 "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
@@ -224,6 +250,8 @@ int main(void) {
 
     // Dark blue background
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+    //glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
+
 
     GLuint VertexArrayID;
     glGenVertexArrays(1, &VertexArrayID);
@@ -235,9 +263,6 @@ int main(void) {
                                             "../src/main/glsl/SimpleFragmentShader.fragmentshader");*/
     GLuint programID = Graphic::LoadShaders("../src/main/glsl/TransformVertexShader.vertexshader",
                                             "../src/main/glsl/TextureFragmentShader.fragmentshader");
-
-
-
 
     // mesh
     Cube cube = Cube();
@@ -253,27 +278,33 @@ int main(void) {
     // Triangle triangle = Triangle();
     // GLuint triangleVB = service.registerMesh(&triangle);
 
+    glfwGetKey(window, GLFW_KEY_UP);
+
+    Camera camera = Camera();
+    Input input = Input(false, false, false, false);
+
+    double t0 = glfwGetTime();
     do {
         frame++;
 
+        double t1 = glfwGetTime();
+        float deltaTime = float(t1 - t0);
+        t0 = t1;
+
+        input = getInput();
+
+        glm::mat4 View = getView(camera, input, deltaTime);
+
         // Проекционная матрица : 45&deg; поле обзора, 4:3 соотношение сторон, диапазон : 0.1 юнит <-> 100 юнитов
         glm::mat4 Projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
-
-        // Или, для ортокамеры
-        glm::mat4 View       = glm::lookAt(
-                glm::vec3(4,3,3), // Камера находится в мировых координатах (4,3,3)
-                glm::vec3(0,0,0), // И направлена в начало координат
-                glm::vec3(0,1,0)  // "Голова" находится сверху
-        );
         // Матрица модели : единичная матрица (Модель находится в начале координат)
         glm::mat4 Model = glm::mat4(1.0f);  // Индивидуально для каждой модели
-
         // glm::mat4 T = glm::translate(glm::mat4(1.0f), glm::vec3(Graphic::animate(0, 1, frame, 0.5), 0, 0));
         glm::mat4 T = glm::mat4(1.0f);
-        glm::mat4 R = glm::rotate(glm::mat4(1.0f), Graphic::animate(0, 6.3, frame, 0.1), glm::vec3(0, 1, 0));
+        //glm::mat4 R = glm::rotate(glm::mat4(1.0f), Graphic::animate(0, 6.3, frame, 0.1), glm::vec3(0, 1, 0));
 
         // Итоговая матрица ModelViewProjection, которая является результатом перемножения наших трех матриц
-        glm::mat4 MVP = Projection * View * R * T * Model; // Помните, что умножение матрицы производиться в обратном порядке
+        glm::mat4 MVP = Projection * View * T * Model; // Помните, что умножение матрицы производиться в обратном порядке
 
         // Получить хэндл переменной в шейдере
         // Только один раз во время инициализации.
@@ -323,20 +354,6 @@ int main(void) {
         // Draw the cube !
         glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 индексов начинающихся с 0. -> 12 треугольников -> 6 граней.
 
-
-        // Draw the triangle !
-        /*glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, triangleVB);
-        glVertexAttribPointer(
-                0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-                3,                  // size
-                GL_FLOAT,           // type
-                GL_FALSE,           // normalized?
-                0,                  // stride
-                (void *) 0            // array buffer offset
-        );
-        glDrawArrays(GL_TRIANGLES, 0, 3);*/
-
         glDisableVertexAttribArray(0);
 
         // Swap buffers
@@ -353,6 +370,61 @@ int main(void) {
     glfwTerminate();
 
     return 0;
+}
+
+glm::mat4 getView(Camera &camera, const Input &input, float deltaTime) {// Get mouse position
+
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+
+    // Reset mouse position for next frame
+    glfwSetCursorPos(window, 1024/2, 768/2);
+
+    // Compute new orientation
+    camera.horizontalAngle += camera.mouseSpeed * float(WIDTH/2 - xpos );
+    camera.verticalAngle   += camera.mouseSpeed * float( HEIGHT/2 - ypos );
+
+    // Direction : Spherical coordinates to Cartesian coordinates conversion
+    glm::vec3 direction(
+            cos(camera.verticalAngle) * sin(camera.horizontalAngle),
+            sin(camera.verticalAngle),
+            cos(camera.verticalAngle) * cos(camera.horizontalAngle)
+    );
+
+    // Right vector
+    glm::vec3 right = glm::vec3(
+            sin(camera.horizontalAngle - 3.14f/2.0f),
+            0,
+            cos(camera.horizontalAngle - 3.14f/2.0f)
+    );
+
+    // Up vector
+    glm::vec3 up = glm::cross( right, direction );
+
+
+
+    // Движение вперед
+    if (input.isWPressed) camera.position += direction * deltaTime * camera.mouseSpeed * 100.0f;
+    if (input.isSPressed) camera.position -= direction * deltaTime * camera.mouseSpeed * 100.0f;
+    if (input.isAPressed) camera.position -= right * deltaTime * camera.mouseSpeed* 100.0f;
+    if (input.isDPressed) camera.position += right * deltaTime * camera.mouseSpeed* 100.0f;
+
+    // Или, для ортокамеры
+    glm::mat4 View       = glm::lookAt(
+            camera.position,           // Camera is here
+            camera.position + direction, // and looks here : at the same position, plus "direction"
+            up                  // Head is up (set to 0,-1,0 to look upside-down)
+    );
+    return View;
+}
+
+Input getInput() {
+    return Input(
+                    glfwGetKey(window, GLFW_KEY_W ) == GLFW_PRESS,
+                    glfwGetKey(window, GLFW_KEY_A ) == GLFW_PRESS,
+                    glfwGetKey(window, GLFW_KEY_S ) == GLFW_PRESS,
+                    glfwGetKey(window, GLFW_KEY_D ) == GLFW_PRESS
+            );
 }
 
 
