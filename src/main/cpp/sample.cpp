@@ -69,57 +69,30 @@ int main(void) {
     // Create and compile our GLSL program from the shaders
     GLuint programID = GLUtil::LoadShaders("../src/main/glsl/SimpleVertexShader.vertexshader",
                                            "../src/main/glsl/SimpleFragmentShader.fragmentshader");
-    /*GLuint programID = GLUtil::LoadShaders("../src/main/glsl/TransformVertexShader.vertexshader",
-                                            "../src/main/glsl/TextureFragmentShader.fragmentshader");*/
 
-    // mesh
-    Cube cube = Cube();
-    CubeTexture cubeTexture = CubeTexture();
 
-    GLuint vertexbuffer =  GLUtil::registerMesh(&cube);
-    GLuint colorbuffer =  GLUtil::registerTexture(&cubeTexture);
-
-    GLuint Texture = GLUtil::loadDDS("../src/main/resources/uvtemplate.DDS");
-    GLuint TextureID  = glGetUniformLocation(programID, "myTextureSampler");
-
-    Triangle triangle = Triangle();
-    GLuint triangleVB =  GLUtil::registerMesh(&triangle);
 
     Camera camera = Camera();
     Input input = Input(false, false, false, false);
-
     FrameData frame = FrameData();
 
+
+    static const GLfloat g_vertex_buffer_data[] = {
+            -1.0f, -1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+    };
+    GLuint vertexbuffer;
+    glGenBuffers(1, &vertexbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+
     do {
-
-        GLUtil::nextFrame(frame);
-        input = GLUtil::getInput(window);
-
-        glm::mat4 View = GLUtil::getView(window, camera, input, frame.getTimeDelta());
-
-        glm::mat4 Projection = glm::perspective(glm::radians(camera.initialFoV), 4.0f / 3.0f, 0.1f, 100.0f);
-        glm::mat4 Model = glm::mat4(1.0f);
-        glm::mat4 T = glm::mat4(1.0f);
-        glm::mat4 MVP = Projection * View * T * Model;
-
-        // Получить хэндл переменной в шейдере
-        // Только один раз во время инициализации.
-        GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Texture);
-        glUniform1i(TextureID, 0);
-
-
         // Clear the screen. It's not mentioned before Tutorial 02, but it can cause flickering, so it's there nonetheless.
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Draw nothing, see you in tutorial 2 !
         glUseProgram(programID);
-
-        // Передать наши трансформации в текущий шейдер
-        // Это делается в основном цикле, поскольку каждая модель будет иметь другую MVP-матрицу (как минимум часть M)
-        glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
@@ -132,21 +105,9 @@ int main(void) {
                 0,                  // stride
                 (void *) 0            // array buffer offset
         );
-        // Второй буфер атрибутов - цвета
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
-        glVertexAttribPointer(
-                1,                                // Атрибут. Здесь необязательно указывать 1, но главное, чтобы это значение совпадало с layout в шейдере..
-                3,                                // Размер
-                GL_FLOAT,                         // Тип
-                GL_FALSE,                         // Нормализован?
-                0,                                // Шаг
-                (void*)0                          // Смещение
-        );
 
-
-        // Draw the cube !
-        glDrawArrays(GL_TRIANGLES, 0, 12*3); // 12*3 индексов начинающихся с 0. -> 12 треугольников -> 6 граней.
+        // Draw the triangle !
+        glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
 
         glDisableVertexAttribArray(0);
 
@@ -154,8 +115,7 @@ int main(void) {
         glfwSwapBuffers(window);
         glfwPollEvents();
 
-    } // Check if the ESC key was pressed or the window was closed
-    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+    } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
            glfwWindowShouldClose(window) == 0);
 
     // Close OpenGL window and terminate GLFW
@@ -163,5 +123,4 @@ int main(void) {
 
     return 0;
 }
-
 

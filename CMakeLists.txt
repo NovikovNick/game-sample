@@ -4,7 +4,13 @@ project(game)
 set(CMAKE_CXX_STANDARD 17)
 set(SOURCE_EXE src/main/cpp/main.cpp
         src/main/cpp/common/impl/shader.cpp
-        src/main/cpp/common/shader.h)
+        src/main/cpp/common/shader.h
+        src/main/cpp/model/model.cpp)
+
+set(SAMPLE src/main/cpp/sample.cpp
+        src/main/cpp/common/impl/shader.cpp
+        src/main/cpp/common/shader.h
+        src/main/cpp/model/model.cpp)
 
 find_package(OpenGL REQUIRED)
 if (NOT OPENGL_FOUND)
@@ -21,6 +27,7 @@ include_directories(
 
 add_executable(game ${SOURCE_EXE})
 
-message("[debug] GLEW = " + ${GLEW_LIBRARIES})
+add_executable(sample ${SAMPLE})
 
 target_link_libraries(game glfw GLEW libGLEW.so libGLU.so libGL.so)
+target_link_libraries(sample glfw GLEW libGLEW.so libGLU.so libGL.so)
