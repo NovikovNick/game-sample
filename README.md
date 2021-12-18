@@ -21,4 +21,5 @@ sudo apt-get install libglfw3 libglfw3-dev
 External dependencies
 ```
 git submodule add git@github.com:g-truc/glm.git external_dependencies/glm
+git submodule add git@github.com:glfw/glfw.git external_dependencies/glfw
 ```

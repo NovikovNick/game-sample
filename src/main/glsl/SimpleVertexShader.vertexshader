@@ -1,20 +1,6 @@
 #version 330 core
-
-// Input vertex data, different for all executions of this shader.
-layout(location = 0) in vec3 vertexPosition_modelspace;
-// Не забывайте, что значение "1" здесь должно быть идентично значению атрибута в glVertexAttribPointer
-layout(location = 1) in vec3 vertexColor;
-
-// Выходные данные. Будут интерполироваться для каждого фрагмента.
-out vec3 fragmentColor;
-
- uniform mat4 MVP;
-
-void main(){
-
-    gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
-
-    // Цвет каждой вершины будет интерполирован для получения цвета
-    // каждого фрагмента
-    fragmentColor = vertexColor;
+layout (location = 0) in vec3 aPos;
+void main()
+{
+   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
 }

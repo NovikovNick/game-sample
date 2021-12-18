@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
 project(game)
 
+add_subdirectory(external_dependencies/glfw)
+
 set(CMAKE_CXX_STANDARD 17)
 set(SOURCE_EXE src/main/cpp/main.cpp
         src/main/cpp/common/impl/shader.cpp
@@ -13,20 +15,15 @@ set(SAMPLE src/main/cpp/sample.cpp
         src/main/cpp/model/model.cpp)
 
 find_package(OpenGL REQUIRED)
-if (NOT OPENGL_FOUND)
-    message("ERROR: OpenGL not found")
-endif (NOT OPENGL_FOUND)
-
-
 find_package(GLEW REQUIRED)
 
 
 include_directories(
-        external_dependencies/glm
+        external_dependencies/glm,
+        external_dependencies/glfw/include
 )
 
 add_executable(game ${SOURCE_EXE})
-
 add_executable(sample ${SAMPLE})
 
 target_link_libraries(game glfw GLEW libGLEW.so libGLU.so libGL.so)
