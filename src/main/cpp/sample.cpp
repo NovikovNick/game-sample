@@ -72,12 +72,15 @@ int main(void) {
             corn0[0], corn0[1], corn0[2],
             corn1[0], corn1[1], corn1[2],
             corn2[0], corn2[1], corn2[2],
-            corn3[0], corn3[1], corn3[2]
+            corn3[0], corn3[1], corn3[2],
+            0.0f, 0.0f, 0.0f
     };
 
     GLuint indices[] = {
-            0, 1, 3,   // fst triangle
-            1, 2, 3    // snd triangle
+            0, 4, 1,   // 1 triangle
+            1, 2, 4,   // 2 triangle
+            4, 3, 2,   // 3 triangle
+            3, 0, 4    // 4 triangle
     };
 
     // Create reference containers for the Vertex Array Object and the Vertex Buffer Object
@@ -101,7 +104,7 @@ int main(void) {
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
     Camera camera = Camera();
@@ -110,42 +113,19 @@ int main(void) {
     do {
 
         // 1. calculate
-        GLUtil::nextFrame(frame);
-        input = GLUtil::getInput(window);
 
-        glm::mat4 Projection = glm::perspective(glm::radians(camera.initialFoV), 4.0f / 3.0f, 0.1f, 100.0f);
-        glm::mat4 Model = glm::mat4(1.0f);
-        glm::mat4 View = GLUtil::getView(window, camera, input, frame.getTimeDelta());
-        glm::mat4 MVP = Projection * View * Model;
-
-
-        if (frame.frame > 100) {
-
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-            /*corn0 = glm::vec4(GLUtil::animate(-1.0f, 1.0f, frame.frame), corn0[1], corn0[2], corn0[3]);
-            corn1 = glm::vec4(corn1[0], GLUtil::animate(-1.0f, 1.0f, frame.frame), corn1[2], corn1[3]);
-            corn2 = glm::vec4(GLUtil::animate(-1.0f, 1.0f, frame.frame), corn2[1], corn2[2], corn2[3]);
-
-
-            GLfloat vertices2[] = {
-                    corn0[0], corn0[1], corn0[2],
-                    corn1[0], corn1[1], corn1[2],
-                    corn2[0], corn2[1], corn2[2]
-            };
-
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
-            // Introduce the vertices into the VBO
-            glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STREAM_DRAW);*/
-
-        }
         // 2. render
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        GLfloat timeValue = glfwGetTime();
+        GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
+        GLint vertexColorLocation = glGetUniformLocation(programID, "customColor");
         glUseProgram(programID);
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);
@@ -155,6 +135,7 @@ int main(void) {
     // Delete all the objects we've created
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
     glDeleteProgram(programID);
     // Delete window before ending the program
     glfwDestroyWindow(window);
