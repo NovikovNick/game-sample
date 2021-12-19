@@ -9,12 +9,14 @@ uniform vec4 customColor;
 void main()
 {
 
-   if(position.x < -0.475f
-        || position.x > 0.475f
-        || position.y < -0.475f
-        || position.y > 0.475f) {
-    FragColor = vec4(customColor.yyy, 1.0f);
+   if(position.x < -0.475f || position.x > 0.475f
+        || position.y < -0.475f || position.y > 0.475f
+        || (position.x > -0.025f && position.x < 0.025f && position.y > -0.025f && position.y < 0.025f)
+        ) {
+
+        FragColor = customColor;
+
    } else {
-    FragColor = customColor;
+        FragColor = vec4(0.9f,0.9f,0.9f,1.0f);
    }
 }
