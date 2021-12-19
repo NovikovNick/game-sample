@@ -233,10 +233,10 @@ glm::mat4 GLUtil::getView(GLFWwindow *window,
     glm::vec3 up = glm::cross( right, direction );
 
 
-    std::cout   << "------------------Camera----------------" << std::endl
+    /*std::cout   << "------------------Camera----------------" << std::endl
                 << "horizontalAngle " << camera.horizontalAngle << std::endl
                 << "verticalAngle   " << camera.verticalAngle << std::endl
-                << "position        " << camera.position[0] << ":" << camera.position[1] << ":" << camera.position[2]  << std::endl;
+                << "position        " << camera.position[0] << ":" << camera.position[1] << ":" << camera.position[2]  << std::endl;*/
 
 
     if (input.isWPressed) camera.position += direction * deltaTime * camera.mouseSpeed * 100.0f;
