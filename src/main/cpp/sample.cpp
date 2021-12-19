@@ -113,6 +113,13 @@ int main(void) {
     do {
 
         // 1. calculate
+        GLUtil::nextFrame(frame);
+        input = GLUtil::getInput(window);
+
+        glm::mat4 View = GLUtil::getView(window, camera, input, frame.getTimeDelta());
+        glm::mat4 Projection = glm::perspective(glm::radians(camera.initialFoV), 4.0f / 3.0f, 0.1f, 100.0f);
+        glm::mat4 Model = glm::mat4(1.0f);
+        glm::mat4 MVP = Projection * View * Model;
 
         // 2. render
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -121,8 +128,11 @@ int main(void) {
         GLfloat timeValue = glfwGetTime();
         GLfloat greenValue = (sin(timeValue) / 2) + 0.5;
         GLint vertexColorLocation = glGetUniformLocation(programID, "customColor");
+        GLint MVPLocation = glGetUniformLocation(programID, "MVP");
+
         glUseProgram(programID);
         glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, &MVP[0][0]);
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
