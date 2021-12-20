@@ -4,3 +4,6 @@
 [submodule "external_dependencies/glfw"]
 	path = external_dependencies/glfw
 	url = git@github.com:glfw/glfw.git
+[submodule "external_dependencies/soil"]
+	path = external_dependencies/soil
+	url = git@github.com:kbranigan/Simple-OpenGL-Image-Library.git

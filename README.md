@@ -22,4 +22,5 @@ External dependencies
 ```
 git submodule add git@github.com:g-truc/glm.git external_dependencies/glm
 git submodule add git@github.com:glfw/glfw.git external_dependencies/glfw
+git submodule add git@github.com:kbranigan/Simple-OpenGL-Image-Library.git external_dependencies/soil
 ```

@@ -15,6 +15,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cstring>
+#include <SOIL.h>
 #include "common/shader.h"
 
 int WIDTH = 1024;
@@ -28,22 +29,16 @@ public:
 
     Shape() {
         GLfloat vertices[] = {
-                0.5f,  0.5f, 0.5f,
-                0.5f, -0.5f, 0.5f,
-                -0.5f, -0.5f, 0.5f,
-                -0.5f,  0.5f, 0.5f,
-                0.5f,  0.5f, -0.5f,
-                0.5f, -0.5f, -0.5f,
-                -0.5f, -0.5f, -0.5f,
-                -0.5f,  0.5f, -0.5f
+                // Позиции          // Цвета             // Текстурные координаты
+                0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // Верхний правый
+                0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // Нижний правый
+                -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // Нижний левый
+                -0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // Верхний левый
         };
 
         GLuint indices[] = {
-                0, 2, 3,   4, 6, 7,
-                0, 1, 2,   4, 5, 6,
-
-                0, 1, 5,   3, 2, 6,
-                5, 4, 0,   6, 7, 3
+                0, 2, 3,
+                0, 1, 2
         };
 
         // Create reference containers for the Vertex Array Object and the Vertex Buffer Object
@@ -60,8 +55,14 @@ public:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void *) 0);
         glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+        glEnableVertexAttribArray(1);
+
+        glVertexAttribPointer(2, 2, GL_FLOAT,GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+        glEnableVertexAttribArray(2);
 
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -122,6 +123,25 @@ int main(void) {
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 
+
+    // Load and create a texture
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
+    // Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT (usually basic wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // Set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Load image, create texture and generate mipmaps
+    int width, height;
+    unsigned char* image = SOIL_load_image("../src/main/resources/container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    SOIL_free_image_data(image);
+    glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
+
     Camera camera = Camera();
     Input input = Input(false, false, false, false);
     FrameData frame = FrameData();
@@ -152,30 +172,11 @@ int main(void) {
             glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
             glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, &MVP[0][0]);
 
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glUniform1i(glGetUniformLocation(programID, "ourTexture"), 0);
+
             glBindVertexArray(shape1.VAO);
-            glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-            glBindVertexArray(0);
-        }
-
-        {
-            glm::mat4 MVP = Projection * View * T * Model;
-            glUseProgram(programID);
-            glUniform4f(vertexColorLocation, greenValue, 0.0f,  0.0f, 1.0f);
-            glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, &MVP[0][0]);
-
-            glBindVertexArray(shape2.VAO);
-            glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
-            glBindVertexArray(0);
-        }
-
-        {
-            glm::mat4 MVP = Projection * View * glm::translate(Model, glm::vec3(-1, 0, 0));
-            glUseProgram(programID);
-            glUniform4f(vertexColorLocation, 0.0f,  0.0f, greenValue,  1.0f);
-            glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, &MVP[0][0]);
-
-            glBindVertexArray(shape3.VAO);
-            glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
         }
 
