@@ -1,6 +1,5 @@
 #version 330 core
 
-in vec3 ourColor;
 in vec2 TexCoord;
 in vec3 ppp;
 
@@ -12,6 +11,7 @@ uniform sampler2D ourTexture;
 void main()
 {
 
+/*
    if(ppp.x < -0.475f || ppp.x > 0.475f
         || ppp.y < -0.475f || ppp.y > 0.475f
         || (ppp.x > -0.025f && ppp.x < 0.025f && ppp.y > -0.025f && ppp.y < 0.025f)
@@ -20,8 +20,8 @@ void main()
         FragColor = customColor;
 
    } else {
-
-        // FragColor = vec4(ourColor, 1.0f);
         FragColor = texture(ourTexture, TexCoord);
    }
+*/
+   FragColor = texture(ourTexture, TexCoord);
 }

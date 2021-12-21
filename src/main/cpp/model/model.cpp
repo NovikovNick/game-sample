@@ -164,10 +164,10 @@ public:
 struct Camera {
 public:
     float mouseSpeed = 0.01;
-    float horizontalAngle = -11.86;
-    float verticalAngle = -3.42;
     float initialFoV = 45.0f;
-    glm::vec3 position = glm::vec3(3.82333, -2.09755, 5.00047);
+    float horizontalAngle = -10.22;
+    float verticalAngle = -0.430005;
+    glm::vec3 position = glm::vec3(-1.63568, 0.857301, 1.55292);
 };
 
 struct FrameData {

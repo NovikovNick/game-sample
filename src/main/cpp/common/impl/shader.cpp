@@ -212,7 +212,7 @@ glm::mat4 GLUtil::getView(GLFWwindow *window,
     glfwGetCursorPos(window, &xpos, &ypos);
     glfwSetCursorPos(window, WIDTH/2, HEIGHT/2);
 
-    camera.horizontalAngle += camera.mouseSpeed * -float(WIDTH/2 - xpos );
+    camera.horizontalAngle += camera.mouseSpeed * float(WIDTH/2 - xpos );
     camera.verticalAngle   += camera.mouseSpeed * float(HEIGHT/2 - ypos );
 
     // Direction : Spherical coordinates to Cartesian coordinates conversion
@@ -234,9 +234,9 @@ glm::mat4 GLUtil::getView(GLFWwindow *window,
 
 
     /*std::cout   << "------------------Camera----------------" << std::endl
-                << "horizontalAngle " << camera.horizontalAngle << std::endl
-                << "verticalAngle   " << camera.verticalAngle << std::endl
-                << "position        " << camera.position[0] << ":" << camera.position[1] << ":" << camera.position[2]  << std::endl;*/
+                << "float horizontalAngle = " << camera.horizontalAngle  << ";\n"
+                << "float verticalAngle = " << camera.verticalAngle  << ";\n"
+                << "glm::vec3 position = glm::vec3(" << camera.position[0] << ", " << camera.position[1] << ", " << camera.position[2]  << ");\n";*/
 
 
     if (input.isWPressed) camera.position += direction * deltaTime * camera.mouseSpeed * 100.0f;

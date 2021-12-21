@@ -58,6 +58,7 @@ int main(void) {
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
     // Dark blue background
+    glEnable(GL_DEPTH_TEST);
     glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
     glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 
@@ -112,7 +113,7 @@ int main(void) {
 
 
         // Clear the screen. It's not mentioned before Tutorial 02, but it can cause flickering, so it's there nonetheless.
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Draw nothing, see you in tutorial 2 !
         glUseProgram(programID);
