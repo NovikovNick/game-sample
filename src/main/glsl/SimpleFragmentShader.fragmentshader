@@ -11,17 +11,17 @@ uniform sampler2D ourTexture;
 void main()
 {
 
-/*
+
    if(ppp.x < -0.475f || ppp.x > 0.475f
         || ppp.y < -0.475f || ppp.y > 0.475f
         || (ppp.x > -0.025f && ppp.x < 0.025f && ppp.y > -0.025f && ppp.y < 0.025f)
         ) {
 
-        FragColor = customColor;
+        FragColor = texture(ourTexture, TexCoord) * customColor;
 
    } else {
         FragColor = texture(ourTexture, TexCoord);
    }
-*/
-   FragColor = texture(ourTexture, TexCoord);
+
+   // FragColor = texture(ourTexture, TexCoord);
 }

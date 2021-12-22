@@ -5,15 +5,13 @@ add_subdirectory(external_dependencies/glfw)
 add_subdirectory(external_dependencies/soil)
 
 set(CMAKE_CXX_STANDARD 17)
-set(SOURCE_EXE src/main/cpp/main.cpp
-        src/main/cpp/common/impl/shader.cpp
-        src/main/cpp/common/shader.h
-        src/main/cpp/model/model.cpp)
 
-set(SAMPLE src/main/cpp/sample.cpp
-        src/main/cpp/common/impl/shader.cpp
+set(SOURCE_EXE src/main/cpp/main.cpp
         src/main/cpp/common/shader.h
-        src/main/cpp/model/model.cpp)
+        src/main/cpp/common/Animation.h
+        src/main/cpp/common/impl/shader.cpp
+        src/main/cpp/model
+        )
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
@@ -26,7 +24,6 @@ include_directories(
 )
 
 add_executable(game ${SOURCE_EXE})
-add_executable(sample ${SAMPLE})
+add_executable(sample src/main/cpp/sample.cpp)
 
-target_link_libraries(game glfw GLEW libGLEW.so libGLU.so libGL.so)
-target_link_libraries(sample glfw GLEW SOIL libGLEW.so libGLU.so libGL.so)
+target_link_libraries(game glfw GLEW SOIL libGLEW.so libGLU.so libGL.so)

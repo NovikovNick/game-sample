@@ -7,19 +7,13 @@
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include "../model/model.cpp"
+#include "../model/Camera.h"
+#include "../model/FrameData.h"
+#include "../model/Input.h"
 
 namespace GLUtil {
 
     GLuint LoadShaders(const char *vertex_file_path, const char *fragment_file_path);
-
-    float animate(float from, float to, uint16_t frameSeqNumber, float velocity = 1);
-
-    GLuint loadDDS(const char * imagepath);
-
-    GLuint registerMesh(Mesh *mesh);
-
-    GLuint registerTexture(Texture *texture);
 
     void nextFrame(FrameData &frameData);
 
