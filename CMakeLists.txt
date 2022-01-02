@@ -21,6 +21,7 @@ include_directories(
         external_dependencies/glm,
         external_dependencies/glfw/include
         external_dependencies/soil/src
+        src/main/cpp
 )
 
 add_executable(game ${SOURCE_EXE})

@@ -1,15 +1,13 @@
-//
-// Created by nicknovikov on 12/11/21.
-//
-
 #ifndef GAME_SHADER_H
 #define GAME_SHADER_H
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
-#include "../model/Camera.h"
-#include "../model/FrameData.h"
-#include "../model/Input.h"
+#include <GLFW/glfw3.h>
+
+#include "model/Camera.h"
+#include "model/FrameData.h"
+#include "model/Input.h"
 
 namespace GLUtil {
 
@@ -27,4 +25,3 @@ namespace GLUtil {
 }
 
 #endif //GAME_SHADER_H
-

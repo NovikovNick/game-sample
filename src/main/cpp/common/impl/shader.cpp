@@ -1,20 +1,20 @@
+#include "common/shader.h"
+
 #include <stdio.h>
 #include <string>
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+
 #include <sstream>
-
 #include <stdlib.h>
-#include <string.h>
 
+#include <string.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
-
-#include "../shader.h"
 
 GLuint GLUtil::LoadShaders(const char *vertex_file_path, const char *fragment_file_path) {
 
@@ -108,10 +108,10 @@ glm::mat4 GLUtil::getView(GLFWwindow *window,
 
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
-    glfwSetCursorPos(window, WIDTH/2, HEIGHT/2);
+    glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 
-    camera.horizontalAngle += camera.mouseSpeed * float(WIDTH/2 - xpos );
-    camera.verticalAngle   += camera.mouseSpeed * float(HEIGHT/2 - ypos );
+    camera.horizontalAngle += camera.mouseSpeed * float(WIDTH / 2 - xpos);
+    camera.verticalAngle += camera.mouseSpeed * float(HEIGHT / 2 - ypos);
 
     // Direction : Spherical coordinates to Cartesian coordinates conversion
     glm::vec3 direction(
@@ -122,13 +122,13 @@ glm::mat4 GLUtil::getView(GLFWwindow *window,
 
     // Right vector
     glm::vec3 right = glm::vec3(
-            sin(camera.horizontalAngle - 3.14f/2.0f),
+            sin(camera.horizontalAngle - 3.14f / 2.0f),
             0,
-            cos(camera.horizontalAngle - 3.14f/2.0f)
+            cos(camera.horizontalAngle - 3.14f / 2.0f)
     );
 
     // Up vector
-    glm::vec3 up = glm::cross( right, direction );
+    glm::vec3 up = glm::cross(right, direction);
 
 
     /*std::cout   << "------------------Camera----------------" << std::endl
@@ -139,12 +139,12 @@ glm::mat4 GLUtil::getView(GLFWwindow *window,
 
     if (input.isWPressed) camera.position += direction * deltaTime * camera.mouseSpeed * 100.0f;
     if (input.isSPressed) camera.position -= direction * deltaTime * camera.mouseSpeed * 100.0f;
-    if (input.isAPressed) camera.position -= right * deltaTime * camera.mouseSpeed* 100.0f;
-    if (input.isDPressed) camera.position += right * deltaTime * camera.mouseSpeed* 100.0f;
+    if (input.isAPressed) camera.position -= right * deltaTime * camera.mouseSpeed * 100.0f;
+    if (input.isDPressed) camera.position += right * deltaTime * camera.mouseSpeed * 100.0f;
 
 
     // Или, для ортокамеры
-    glm::mat4 View       = glm::lookAt(
+    glm::mat4 View = glm::lookAt(
             camera.position,           // Camera is here
             camera.position + direction, // and looks here : at the same position, plus "direction"
             up                  // Head is up (set to 0,-1,0 to look upside-down)
@@ -154,10 +154,10 @@ glm::mat4 GLUtil::getView(GLFWwindow *window,
 
 Input GLUtil::getInput(GLFWwindow *window) {
     return Input(
-            glfwGetKey(window, GLFW_KEY_W ) == GLFW_PRESS,
-            glfwGetKey(window, GLFW_KEY_A ) == GLFW_PRESS,
-            glfwGetKey(window, GLFW_KEY_S ) == GLFW_PRESS,
-            glfwGetKey(window, GLFW_KEY_D ) == GLFW_PRESS
+            glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS,
+            glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS,
+            glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS,
+            glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS
     );
 }
 

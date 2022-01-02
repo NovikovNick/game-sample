@@ -24,7 +24,7 @@ GLFWwindow *window;
 
 class Shape {
 public:
-    GLuint VAO, VBO;
+    GLuint VAO, VBO, texture, shaderID;
 
     Shape() {
         GLfloat vertices[] = {
@@ -90,6 +90,26 @@ public:
 
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        // Load and create a texture
+        // GLuint texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D,
+                      texture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
+        // Set the texture wrapping parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                        GL_REPEAT);    // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // Set texture filtering parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // Load image, create texture and generate mipmaps
+        int width, height;
+        unsigned char *image = SOIL_load_image("../src/main/resources/container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        SOIL_free_image_data(image);
+        glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
     }
 
     virtual ~Shape() {
@@ -136,47 +156,38 @@ int main(void) {
     glfwSetCursorPos(window, WIDTH / 2, HEIGHT / 2);
 
     // Create and compile our GLSL program from the shaders
-    GLuint programID = GLUtil::LoadShaders("../src/main/glsl/SimpleVertexShader.vertexshader",
-                                           "../src/main/glsl/SimpleFragmentShader.fragmentshader");
 
     Shape shape1 = Shape();
-    Shape shape2 = Shape();
-    Shape shape3 = Shape();
+    shape1.shaderID = GLUtil::LoadShaders("../src/main/glsl/SimpleVertexShader.vertexshader",
+                                          "../src/main/glsl/SimpleFragmentShader.fragmentshader");
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_DEPTH_TEST);
 
 
-    // Load and create a texture
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D,
-                  texture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
-    // Set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                    GL_REPEAT);    // Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // Set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // Load image, create texture and generate mipmaps
-    int width, height;
-    unsigned char *image = SOIL_load_image("../src/main/resources/container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    SOIL_free_image_data(image);
-    glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
-
     Camera camera = Camera();
     Input input = Input(false, false, false, false);
     FrameData frame = FrameData();
+
+    glm::vec3 position = glm::vec3(5, 5, 0);
+    
     do {
 
         // 1. calculate
         GLUtil::nextFrame(frame);
         input = GLUtil::getInput(window);
 
-        glm::mat4 View = GLUtil::getView(window, camera, input, frame.getTimeDelta());
+        float d = 0.08;
+        position = glm::vec3(
+                position.x + (input.isAPressed ? -d : (input.isDPressed ? d : 0)),
+                position.y + (input.isWPressed ? d : (input.isSPressed ? -d : 0)),
+                0);
+        position = glm::vec3(
+                (position.x > 11 ? 11 : (position.x < 1 ? 1 : position.x)),
+                (position.y > 8 ? 8 : (position.y < 1 ? 1 : position.y)),
+                0);
+
+        glm::mat4 View = GLUtil::getView(window, camera, Input(false, false, false, false), frame.getTimeDelta());
         glm::mat4 Projection = glm::perspective(glm::radians(camera.initialFoV), 4.0f / 3.0f, 0.1f, 100.0f);
         glm::mat4 Model = glm::mat4(1.0f);
         glm::mat4 T = glm::translate(glm::mat4(1.0f), glm::vec3(1, 0, 0));
@@ -188,34 +199,35 @@ int main(void) {
 
         GLfloat timeValue = glfwGetTime();
         GLfloat color = (sin(timeValue) / 2) + 0.5;
-        GLint vertexColorLocation = glGetUniformLocation(programID, "customColor");
-        GLint MVPLocation = glGetUniformLocation(programID, "MVP");
+        GLint vertexColorLocation = glGetUniformLocation(shape1.shaderID, "customColor");
+        GLint MVPLocation = glGetUniformLocation(shape1.shaderID, "MVP");
 
         for (int x = 0; x < 13; ++x) {
-            for (int y = 0; y < 2; ++y) {
-                glm::mat4 MVP = Projection * View * glm::translate(Model, glm::vec3(x, y, 0));
-                glUseProgram(programID);
-                glUniform4f(vertexColorLocation, 1.0f - color, 1.0f, 1.0f, 1.0f);
-                glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, &MVP[0][0]);
+            for (int y = 0; y < 10; ++y) {
+                if (x == 0 || x == 12 || y == 0 || y == 9) {
+                    glm::mat4 MVP = Projection * View * glm::translate(Model, glm::vec3(x, y, 0));
+                    glUseProgram(shape1.shaderID);
+                    glUniform4f(vertexColorLocation, 1.0f - color, 1.0f, 1.0f, 1.0f);
+                    glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, &MVP[0][0]);
 
-                glBindTexture(GL_TEXTURE_2D, texture);
-                glUniform1i(glGetUniformLocation(programID, "ourTexture"), 0);
+                    glBindTexture(GL_TEXTURE_2D, shape1.texture);
+                    glUniform1i(glGetUniformLocation(shape1.shaderID, "ourTexture"), 0);
 
-                glBindVertexArray(shape1.VAO);
-                glDrawArrays(GL_TRIANGLES, 0, 36);
-                glBindVertexArray(0);
+                    glBindVertexArray(shape1.VAO);
+                    glDrawArrays(GL_TRIANGLES, 0, 36);
+                    glBindVertexArray(0);
+                };
             }
         }
 
-         {
-
-            glm::mat4 MVP = Projection * View * glm::translate(Model, glm::vec3(Animation::animate(1.0f, 11.0f, frame.frame, 0.5), 4, 0));
-            glUseProgram(programID);
+        {
+            glm::mat4 MVP = Projection * View * glm::translate(Model, position);
+            glUseProgram(shape1.shaderID);
             glUniform4f(vertexColorLocation, 1.0f - color, 1.0f, 1.0f, 1.0f);
             glUniformMatrix4fv(MVPLocation, 1, GL_FALSE, &MVP[0][0]);
 
-            glBindTexture(GL_TEXTURE_2D, texture);
-            glUniform1i(glGetUniformLocation(programID, "ourTexture"), 0);
+            glBindTexture(GL_TEXTURE_2D, shape1.texture);
+            glUniform1i(glGetUniformLocation(shape1.shaderID, "ourTexture"), 0);
 
             glBindVertexArray(shape1.VAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -227,7 +239,7 @@ int main(void) {
     } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && !glfwWindowShouldClose(window));
 
     // Delete all the objects we've created
-    glDeleteProgram(programID);
+    glDeleteProgram(shape1.shaderID);
     // Delete window before ending the program
     glfwDestroyWindow(window);
     // Terminate GLFW before ending the program
