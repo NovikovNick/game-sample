@@ -11,7 +11,7 @@ set(SOURCE_EXE src/main/cpp/main.cpp
         src/main/cpp/common/Animation.h
         src/main/cpp/common/impl/shader.cpp
         src/main/cpp/model
-        )
+        src/main/cpp/graphic)
 
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)

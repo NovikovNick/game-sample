@@ -7,7 +7,7 @@ public:
     double t0 = 0;
     double t1 = 0;
 
-    float getTimeDelta() {
+    float getTimeDelta() const {
         return float(t1 - t0);
     }
 };

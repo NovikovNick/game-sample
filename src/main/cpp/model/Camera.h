@@ -1,7 +1,6 @@
 #ifndef GAME_CAMERA_MODEL_H
 #define GAME_CAMERA_MODEL_H
 
-#include <GL/glew.h>
 #include <glm/vec3.hpp>
 
 struct Camera {
