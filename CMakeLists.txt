@@ -6,10 +6,9 @@ add_subdirectory(external_dependencies/soil)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(SOURCE_EXE src/main/cpp/main.cpp
-        src/main/cpp/common/shader.h
-        src/main/cpp/common/Animation.h
-        src/main/cpp/common/impl/shader.cpp
+set(SOURCE_EXE
+        src/main/cpp/main.cpp
+        src/main/cpp/common
         src/main/cpp/model
         src/main/cpp/graphic)
 

@@ -1,31 +1,29 @@
 #include "graphic/GraphicProvider.h"
 
 #include <stdio.h>
-#include <stdlib.h>
+#include <string>
+#include <vector>
 #include <iostream>
-#include <cstring>
+#include <fstream>
+#include <algorithm>
+#include <string.h>
+#include <sstream>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
 #include <SOIL.h>
+#include <model/Camera.h>
 
-#include "common/shader.h"
 
-
-class OpenGLGameObject : public GameObject {
+class OpenGLGraphicMetaData : public GraphicMetaData {
 public:
     GLuint VAO, VBO, texture, shaderID;
 };
 
 class OpenGLGraphicProvider : public GraphicProvider {
-
-    int SCREEN_WIDTH = 1024;
-    int SCREEN_HEIGHT = 768;
-
-    GLFWwindow *window_ = NULL;
-
+public:
     void init() override {
         if (!glfwInit()) {
             fprintf(stderr, "Failed to initialize GLFW\n");
@@ -69,7 +67,7 @@ class OpenGLGraphicProvider : public GraphicProvider {
 
     }
 
-    GameObject *register_objects() const override {
+    GraphicMetaData *register_objects() override {
 
 
         //this->onFrameRender();
@@ -164,11 +162,11 @@ class OpenGLGraphicProvider : public GraphicProvider {
 
 
         // Create and compile our GLSL program from the shaders
-        shaderID = GLUtil::LoadShaders("../src/main/glsl/SimpleVertexShader.vertexshader",
-                                       "../src/main/glsl/SimpleFragmentShader.fragmentshader");
+        shaderID = LoadShaders("../src/main/glsl/SimpleVertexShader.vertexshader",
+                               "../src/main/glsl/SimpleFragmentShader.fragmentshader");
 
 
-        OpenGLGameObject *pObject = new OpenGLGameObject();
+        OpenGLGraphicMetaData *pObject = new OpenGLGraphicMetaData();
         pObject->VAO = VAO;
         pObject->VBO = VBO;
         pObject->texture = texture;
@@ -176,9 +174,9 @@ class OpenGLGraphicProvider : public GraphicProvider {
         return pObject;
     }
 
-    void destroy_objects(GameObject *gameObject) const override {
+    void destroy_objects(GraphicMetaData *gameObject) const override {
 
-        OpenGLGameObject *it = (OpenGLGameObject *) gameObject;
+        OpenGLGraphicMetaData *it = (OpenGLGraphicMetaData *) gameObject;
 
         glDeleteVertexArrays(1, &it->VAO);
         glDeleteBuffers(1, &it->VBO);
@@ -187,9 +185,9 @@ class OpenGLGraphicProvider : public GraphicProvider {
         delete gameObject;
     }
 
-    void render(GameObject *gameObject, glm::mat4 MVP) const override {
+    void render(GraphicMetaData *gameObject, glm::mat4 MVP) const override {
 
-        OpenGLGameObject *it = (OpenGLGameObject *) gameObject;
+        OpenGLGraphicMetaData *it = (OpenGLGraphicMetaData *) gameObject;
 
         GLint vertexColorLocation = glGetUniformLocation(it->shaderID, "customColor");
         GLint MVPLocation = glGetUniformLocation(it->shaderID, "MVP");
@@ -210,19 +208,22 @@ class OpenGLGraphicProvider : public GraphicProvider {
             const GraphicProvider *provider,
             const Input input,
             const FrameData frame,
-            const glm::mat4 View)> f) const override {
+            const glm::mat4 View)> f) override {
 
 
         Camera camera = Camera();
 
-        Input input = Input(false, false, false, false);
+        Input dummy = Input(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2,false, false, false, false);
+        Input input = dummy;
         FrameData frame = FrameData();
 
         do {
-            GLUtil::nextFrame(frame);
-            input = GLUtil::getInput(window_);
-            glm::mat4 View = GLUtil::getView(window_, camera, Input(false, false, false, false), frame.getTimeDelta());
+            nextFrame(frame);
 
+            input = getInput();
+            glfwSetCursorPos(window_, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+
+            glm::mat4 View = getView(camera, input, frame.getTimeDelta());
 
             glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -241,5 +242,158 @@ class OpenGLGraphicProvider : public GraphicProvider {
         glfwDestroyWindow(window_);
         // Terminate GLFW before ending the program
         glfwTerminate();
+    }
+
+private:
+    int SCREEN_WIDTH = 1024;
+    int SCREEN_HEIGHT = 768;
+    GLFWwindow *window_ = NULL;
+
+    Input getInput() {
+
+        double xpos, ypos;
+        glfwGetCursorPos(window_, &xpos, &ypos);
+
+        return Input(
+                xpos, ypos,
+                glfwGetKey(window_, GLFW_KEY_W) == GLFW_PRESS,
+                glfwGetKey(window_, GLFW_KEY_A) == GLFW_PRESS,
+                glfwGetKey(window_, GLFW_KEY_S) == GLFW_PRESS,
+                glfwGetKey(window_, GLFW_KEY_D) == GLFW_PRESS
+        );
+    }
+
+    void nextFrame(FrameData &frameData) {
+
+        frameData.frame = frameData.frame + 1;
+        frameData.t0 = frameData.t1;
+        frameData.t1 = glfwGetTime();
+    }
+
+    glm::mat4 getView(Camera &camera,
+                      const Input &input,
+                      const float deltaTime) {
+
+        camera.horizontalAngle += camera.mouseSpeed * float(SCREEN_WIDTH / 2 - input.xPos);
+        camera.verticalAngle += camera.mouseSpeed * float(SCREEN_HEIGHT / 2 - input.yPos);
+
+        // Direction : Spherical coordinates to Cartesian coordinates conversion
+        glm::vec3 direction(
+                cos(camera.verticalAngle) * sin(camera.horizontalAngle),
+                sin(camera.verticalAngle),
+                cos(camera.verticalAngle) * cos(camera.horizontalAngle)
+        );
+
+        // Right vector
+        glm::vec3 right = glm::vec3(
+                sin(camera.horizontalAngle - 3.14f / 2.0f),
+                0,
+                cos(camera.horizontalAngle - 3.14f / 2.0f)
+        );
+
+        // Up vector
+        glm::vec3 up = glm::cross(right, direction);
+
+
+        /*std::cout   << "------------------Camera----------------" << std::endl
+                    << "float horizontalAngle = " << camera.horizontalAngle  << ";\n"
+                    << "float verticalAngle = " << camera.verticalAngle  << ";\n"
+                    << "glm::vec3 position = glm::vec3(" << camera.position[0] << ", " << camera.position[1] << ", " << camera.position[2]  << ");\n";*/
+
+
+        if (input.isWPressed) camera.position += direction * deltaTime * camera.mouseSpeed * 100.0f;
+        if (input.isSPressed) camera.position -= direction * deltaTime * camera.mouseSpeed * 100.0f;
+        if (input.isAPressed) camera.position -= right * deltaTime * camera.mouseSpeed * 100.0f;
+        if (input.isDPressed) camera.position += right * deltaTime * camera.mouseSpeed * 100.0f;
+
+
+        // Или, для ортокамеры
+        glm::mat4 View = glm::lookAt(
+                camera.position,           // Camera is here
+                camera.position + direction, // and looks here : at the same position, plus "direction"
+                up                  // Head is up (set to 0,-1,0 to look upside-down)
+        );
+        return View;
+    }
+
+    GLuint LoadShaders(const char *vertex_file_path, const char *fragment_file_path) {
+
+        // Создаем шейдеры
+        GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+        GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+
+        // Загружаем код Вершинного Шейдера из файла
+        std::string VertexShaderCode;
+        std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
+        if (VertexShaderStream.is_open()) {
+            std::stringstream sstr;
+            sstr << VertexShaderStream.rdbuf();
+            VertexShaderCode = sstr.str();
+            VertexShaderStream.close();
+        }
+
+        // Загружаем код Фрагментного шейдера из файла
+        std::string FragmentShaderCode;
+        std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
+        if (FragmentShaderStream.is_open()) {
+            std::stringstream sstr;
+            sstr << FragmentShaderStream.rdbuf();
+            FragmentShaderCode = sstr.str();
+            FragmentShaderStream.close();
+        }
+
+        GLint Result = GL_FALSE;
+        int InfoLogLength;
+
+        // Компилируем Вершинный шейдер
+        printf("Compiling vertex shader: %sn \n", vertex_file_path);
+        char const *VertexSourcePointer = VertexShaderCode.c_str();
+        glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
+        glCompileShader(VertexShaderID);
+
+        // Выполняем проверку Вершинного шейдера
+        glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
+        glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+        if (InfoLogLength > 0) {
+            std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
+            glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+            fprintf(stdout, "%sn", &VertexShaderErrorMessage[0]);
+        }
+
+        // Компилируем Фрагментный шейдер
+        printf("Compiling fragment shader: %sn \n", fragment_file_path);
+        char const *FragmentSourcePointer = FragmentShaderCode.c_str();
+        glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
+        glCompileShader(FragmentShaderID);
+
+        // Проверяем Фрагментный шейдер
+        glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
+        glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+        if (InfoLogLength > 0) {
+            std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
+            glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
+            fprintf(stdout, "%s\n", &FragmentShaderErrorMessage[0]);
+        }
+
+        // Создаем шейдерную программу и привязываем шейдеры к ней
+        fprintf(stdout, "Create shader program and bind shaders \n");
+        GLuint ProgramID = glCreateProgram();
+        glAttachShader(ProgramID, VertexShaderID);
+        glAttachShader(ProgramID, FragmentShaderID);
+        glLinkProgram(ProgramID);
+
+        // Проверяем шейдерную программу
+        glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+        glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+        if (InfoLogLength > 0) {
+            std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
+            glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+            fprintf(stdout, "%s\n", &ProgramErrorMessage[0]);
+        }
+
+        glDeleteShader(VertexShaderID);
+        glDeleteShader(FragmentShaderID);
+
+        return ProgramID;
     }
 };

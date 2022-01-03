@@ -1,7 +1,12 @@
-#ifndef GAME_MODEL_SCENE_H
-#define GAME_MODEL_SCENE_H
+#ifndef GAME_GAMEOBJECT_H
+#define GAME_GAMEOBJECT_H
+
+
+#include <glm/vec3.hpp>
 
 struct GameObject {
 
+    glm::vec3 position;
+    GraphicMetaData* graphic_metadata;
 };
-#endif //GAME_MODEL_GAME_OBJECT_H
+#endif //GAME_GAMEOBJECT_H
