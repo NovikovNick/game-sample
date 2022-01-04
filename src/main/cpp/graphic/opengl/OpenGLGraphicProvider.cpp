@@ -24,7 +24,7 @@ public:
 
 class OpenGLGraphicProvider : public GraphicProvider {
 public:
-    void init() override {
+    void Init() override {
         if (!glfwInit()) {
             fprintf(stderr, "Failed to initialize GLFW\n");
             getchar();
@@ -67,7 +67,7 @@ public:
 
     }
 
-    GraphicMetaData *register_objects() override {
+    GraphicMetaData *GetCubeGraphicMetaData() override {
 
 
         //this->onFrameRender();
@@ -174,7 +174,7 @@ public:
         return pObject;
     }
 
-    void destroy_objects(GraphicMetaData *gameObject) const override {
+    /*void DestroyObjects(GraphicMetaData *gameObject) const override {
 
         OpenGLGraphicMetaData *it = (OpenGLGraphicMetaData *) gameObject;
 
@@ -183,9 +183,9 @@ public:
         glDeleteProgram(it->shaderID);
 
         delete gameObject;
-    }
+    }*/
 
-    void render(GraphicMetaData *gameObject, glm::mat4 MVP) const override {
+    void Render(GraphicMetaData *gameObject, glm::mat4 MVP) const override {
 
         OpenGLGraphicMetaData *it = (OpenGLGraphicMetaData *) gameObject;
 
@@ -204,7 +204,7 @@ public:
         glBindVertexArray(0);
     }
 
-    void start(std::function<void(
+    void OnMainLoop(std::function<void(
             const GraphicProvider *provider,
             const Input input,
             const FrameData frame,
